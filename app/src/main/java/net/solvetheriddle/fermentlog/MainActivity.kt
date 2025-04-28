@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,10 +44,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.os.ConfigurationCompat
 import net.solvetheriddle.fermentlog.data.Db
 import net.solvetheriddle.fermentlog.domain.model.Batch
-import net.solvetheriddle.fermentlog.domain.model.BrewingPhase
-import net.solvetheriddle.fermentlog.domain.model.Ingredient
-import net.solvetheriddle.fermentlog.domain.model.Status
-import net.solvetheriddle.fermentlog.domain.model.Vessel
 import net.solvetheriddle.fermentlog.ui.theme.FermentTheme
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -74,8 +71,14 @@ class MainActivity : ComponentActivity() {
                                 onClick = { /* Handle navigation to active */ }
                             )
                             NavigationBarItem(
-                                icon = { Icon(Icons.Filled.Check, "Completed") },
-                                label = { Text("Completed") },
+                                icon = { Icon(Icons.Filled.ShoppingCart, "Ingredients") },
+                                label = { Text("Ingredients") },
+                                selected = false,
+                                onClick = { /* Handle navigation to active */ }
+                            )
+                            NavigationBarItem(
+                                icon = { Icon(Icons.Filled.Check, "Vessels") },
+                                label = { Text("Vessels") },
                                 selected = false,
                                 onClick = { /* Handle navigation to completed */ }
                             )

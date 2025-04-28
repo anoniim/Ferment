@@ -10,7 +10,7 @@ data class Batch(
     val startDate: Date,
     val vessel: Vessel,
     val ingredients: List<Ingredient>,
-    val parentId: String? = null // Making parentId nullable as it might not always be present
+    val parentId: String? = null
 )
 
 enum class Status {
