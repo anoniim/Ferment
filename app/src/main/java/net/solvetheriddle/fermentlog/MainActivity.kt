@@ -19,21 +19,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import net.solvetheriddle.fermentlog.navigation.AppBottomNavigation
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -44,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.os.ConfigurationCompat
 import net.solvetheriddle.fermentlog.data.Db
 import net.solvetheriddle.fermentlog.domain.model.Batch
+import net.solvetheriddle.fermentlog.ui.screens.AddBatchScreen
 import net.solvetheriddle.fermentlog.ui.theme.FermentTheme
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -55,40 +54,38 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FermentTheme {
-                Scaffold(
-                    topBar = { TopAppBar(title = { Text("Active Batches") }) },
-                    floatingActionButton = {
-                        FloatingActionButton(onClick = { /* Handle add new batch */ }) {
-                            Icon(Icons.Filled.Add, contentDescription = "Add Batch")
+                val activeBatches = remember { mutableStateListOf<Batch>().apply { addAll(Db.sampleActiveBatches) } }
+                var showAddBatchScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
+
+                if (showAddBatchScreen.value) {
+                    AddBatchScreen(
+                        onNavigateBack = { showAddBatchScreen.value = false },
+                        onBatchAdded = { newBatch ->
+                            activeBatches.add(0, newBatch) // Add to the beginning of the list
                         }
-                    },
-                    bottomBar = {
-                        NavigationBar {
-                            NavigationBarItem(
-                                icon = { Icon(Icons.Filled.Refresh, "Active") },
-                                label = { Text("Active") },
-                                selected = true,
-                                onClick = { /* Handle navigation to active */ }
-                            )
-                            NavigationBarItem(
-                                icon = { Icon(Icons.Filled.ShoppingCart, "Ingredients") },
-                                label = { Text("Ingredients") },
-                                selected = false,
-                                onClick = { /* Handle navigation to active */ }
-                            )
-                            NavigationBarItem(
-                                icon = { Icon(Icons.Filled.Check, "Vessels") },
-                                label = { Text("Vessels") },
-                                selected = false,
-                                onClick = { /* Handle navigation to completed */ }
-                            )
-                        }
-                    }
-                ) { innerPadding -> // Correct: contentPadding is now innerPadding
-                    MainScreen(
-                        activeBatches = Db.sampleActiveBatches,
-                        modifier = Modifier.padding(innerPadding) // Correct: Apply padding here
                     )
+                } else {
+                    Scaffold(
+                        topBar = { TopAppBar(title = { Text("Active Batches") }) },
+                        floatingActionButton = {
+                            FloatingActionButton(onClick = { showAddBatchScreen.value = true }) {
+                                Icon(Icons.Filled.Add, contentDescription = "Add Batch")
+                            }
+                        },
+                        bottomBar = {
+                            AppBottomNavigation(
+                                currentRoute = "active",
+                                onNavigateToActive = { /* Handle navigation to active */ },
+                                onNavigateToIngredients = { /* Handle navigation to ingredients */ },
+                                onNavigateToVessels = { /* Handle navigation to vessels */ }
+                            )
+                        }
+                    ) { innerPadding ->
+                        MainScreen(
+                            activeBatches = activeBatches,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
                 }
             }
         }

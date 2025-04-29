@@ -10,7 +10,7 @@ import java.util.Date
 object Db {
     // Sample data for preview and testing
     val sampleVessel = Vessel("v1", "Glass Jar", 2.0)
-    val sampleIngredient = Ingredient("i1", "Tea", "20g")
+    val sampleIngredient = Ingredient("i1", "Tea")
     val sampleActiveBatches = listOf(
         Batch(
             id = "b1",

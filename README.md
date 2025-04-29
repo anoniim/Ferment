@@ -81,6 +81,7 @@ Batch - BrewingPhase
 Batch -l- Status
 Batch -- Vessel
 Batch -- Ingredient
+Ingredient - IngredientAmount
 
 @enduml
 ```
