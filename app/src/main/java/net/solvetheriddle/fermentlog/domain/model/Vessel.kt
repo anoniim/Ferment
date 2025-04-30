@@ -1,7 +1,10 @@
 package net.solvetheriddle.fermentlog.domain.model
 
+import androidx.annotation.Keep
+
+@Keep
 data class Vessel(
-    val id: String,
-    val name: String,
-    val capacity: Double
+    var id: String = "",
+    var name: String = "",
+    var capacity: Double = 0.0
 )

@@ -29,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
@@ -42,6 +43,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.os.ConfigurationCompat
 import net.solvetheriddle.fermentlog.data.Db
 import net.solvetheriddle.fermentlog.domain.model.Batch
+import net.solvetheriddle.fermentlog.domain.model.BrewingPhase
+import net.solvetheriddle.fermentlog.domain.model.Status
 import net.solvetheriddle.fermentlog.ui.screens.AddBatchScreen
 import net.solvetheriddle.fermentlog.ui.theme.FermentTheme
 import java.text.SimpleDateFormat
@@ -54,14 +57,23 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FermentTheme {
-                val activeBatches = remember { mutableStateListOf<Batch>().apply { addAll(Db.sampleActiveBatches) } }
-                var showAddBatchScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
+                val activeBatches = remember { mutableStateListOf<Batch>() }
+                val showAddBatchScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
+
+                // Collect batches from Firebase
+                LaunchedEffect(Unit) {
+                    Db.getBatchesFlow().collect { batches ->
+                        activeBatches.clear()
+                        activeBatches.addAll(batches.filter { it.status == Status.ACTIVE })
+                    }
+                }
 
                 if (showAddBatchScreen.value) {
                     AddBatchScreen(
                         onNavigateBack = { showAddBatchScreen.value = false },
                         onBatchAdded = { newBatch ->
-                            activeBatches.add(0, newBatch) // Add to the beginning of the list
+                            Db.addBatch(newBatch)
+                            // The batch will be added to the list via the Flow collection
                         }
                     )
                 } else {
@@ -153,5 +165,26 @@ fun getLocale(): Locale? {
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-    MainScreen(Db.sampleActiveBatches)
+    // Create sample data for preview
+    val sampleBatches = listOf(
+        Batch(
+            id = "b1",
+            name = "Kombucha Batch 1",
+            status = Status.ACTIVE,
+            phase = BrewingPhase.PRIMARY,
+            startDateTimestamp = Date().time,
+            vessel = Db.sampleVessel,
+            ingredients = listOf(Db.sampleIngredientAmount)
+        ),
+        Batch(
+            id = "b2",
+            name = "Kombucha Batch 2",
+            status = Status.ACTIVE,
+            phase = BrewingPhase.SECONDARY,
+            startDateTimestamp = Date().time,
+            vessel = Db.sampleVessel,
+            ingredients = listOf(Db.sampleIngredientAmount)
+        )
+    )
+    MainScreen(sampleBatches)
 }

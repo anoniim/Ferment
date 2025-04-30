@@ -1,11 +1,15 @@
 package net.solvetheriddle.fermentlog.domain.model
 
+import androidx.annotation.Keep
+
+@Keep
 data class Ingredient(
-    val id: String,
-    val name: String,
+    var id: String = "",
+    var name: String = ""
 )
 
+@Keep
 data class IngredientAmount(
-    val ingredient: Ingredient,
-    val amount: String
+    var ingredient: Ingredient = Ingredient(),
+    var amount: String = ""
 )

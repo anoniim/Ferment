@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "121050629822",
+    "firebase_url": "https://ferment-97cda-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "ferment-97cda",
+    "storage_bucket": "ferment-97cda.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:121050629822:android:b284a07749c1a3b12c00ef",
+        "android_client_info": {
+          "package_name": "net.solvetheriddle.fermentlog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1cDTzyIE1vMjsqMQR2IvWqgtiJwfNGcM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
