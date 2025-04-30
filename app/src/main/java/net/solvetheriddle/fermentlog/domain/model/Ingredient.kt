@@ -1,15 +1,16 @@
 package net.solvetheriddle.fermentlog.domain.model
 
 import androidx.annotation.Keep
+import java.util.UUID
 
 @Keep
 data class Ingredient(
-    var id: String = "",
-    var name: String = ""
+    val id: String = UUID.randomUUID().toString(),
+    val name: String,
 )
 
 @Keep
 data class IngredientAmount(
-    var ingredient: Ingredient = Ingredient(),
-    var amount: String = ""
+    val ingredient: Ingredient,
+    val amount: String = ""
 )

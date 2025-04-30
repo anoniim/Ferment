@@ -42,12 +42,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.ConfigurationCompat
 import net.solvetheriddle.fermentlog.data.Db
+import net.solvetheriddle.fermentlog.data.model.BatchData
 import net.solvetheriddle.fermentlog.domain.model.Batch
 import net.solvetheriddle.fermentlog.domain.model.BrewingPhase
 import net.solvetheriddle.fermentlog.domain.model.Status
 import net.solvetheriddle.fermentlog.ui.screens.AddBatchScreen
+import net.solvetheriddle.fermentlog.ui.screens.VesselsScreen
 import net.solvetheriddle.fermentlog.ui.theme.FermentTheme
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.Date
 import java.util.Locale
 
@@ -57,8 +60,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FermentTheme {
-                val activeBatches = remember { mutableStateListOf<Batch>() }
+                val activeBatches = remember { mutableStateListOf<BatchData>() }
                 val showAddBatchScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
+                val showVesselsScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
 
                 // Collect batches from Firebase
                 LaunchedEffect(Unit) {
@@ -68,35 +72,50 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (showAddBatchScreen.value) {
-                    AddBatchScreen(
-                        onNavigateBack = { showAddBatchScreen.value = false },
-                        onBatchAdded = { newBatch ->
-                            Db.addBatch(newBatch)
-                            // The batch will be added to the list via the Flow collection
-                        }
-                    )
-                } else {
-                    Scaffold(
-                        topBar = { TopAppBar(title = { Text("Active Batches") }) },
-                        floatingActionButton = {
-                            FloatingActionButton(onClick = { showAddBatchScreen.value = true }) {
-                                Icon(Icons.Filled.Add, contentDescription = "Add Batch")
+                when {
+                    showAddBatchScreen.value -> {
+                        AddBatchScreen(
+                            onNavigateBack = { showAddBatchScreen.value = false },
+                            onBatchAdded = { newBatch ->
+                                Db.addBatch(newBatch)
+                                // The batch will be added to the list via the Flow collection
                             }
-                        },
-                        bottomBar = {
-                            AppBottomNavigation(
-                                currentRoute = "active",
-                                onNavigateToActive = { /* Handle navigation to active */ },
-                                onNavigateToIngredients = { /* Handle navigation to ingredients */ },
-                                onNavigateToVessels = { /* Handle navigation to vessels */ }
+                        )
+                    }
+                    showVesselsScreen.value -> {
+                        VesselsScreen(
+                            onNavigateToActive = { 
+                                showVesselsScreen.value = false 
+                            },
+                            onNavigateToIngredients = { 
+                                // Handle navigation to ingredients 
+                                showVesselsScreen.value = false
+                                // Add code to show ingredients screen when implemented
+                            }
+                        )
+                    }
+                    else -> {
+                        Scaffold(
+                            topBar = { TopAppBar(title = { Text("Active Batches") }) },
+                            floatingActionButton = {
+                                FloatingActionButton(onClick = { showAddBatchScreen.value = true }) {
+                                    Icon(Icons.Filled.Add, contentDescription = "Add Batch")
+                                }
+                            },
+                            bottomBar = {
+                                AppBottomNavigation(
+                                    currentRoute = "active",
+                                    onNavigateToActive = { /* Already on active screen */ },
+                                    onNavigateToIngredients = { /* Handle navigation to ingredients */ },
+                                    onNavigateToVessels = { showVesselsScreen.value = true }
+                                )
+                            }
+                        ) { innerPadding ->
+                            MainScreen(
+                                activeBatches = activeBatches,
+                                modifier = Modifier.padding(innerPadding)
                             )
                         }
-                    ) { innerPadding ->
-                        MainScreen(
-                            activeBatches = activeBatches,
-                            modifier = Modifier.padding(innerPadding)
-                        )
                     }
                 }
             }
@@ -150,7 +169,7 @@ fun BatchCard(batch: Batch) {
 
 @Composable
 @ReadOnlyComposable
-fun formatDate(date: Date): String {
+fun formatDate(date: LocalDate): String {
     val formatter = SimpleDateFormat("MMM dd, yyyy", getLocale())
     return formatter.format(date)
 }

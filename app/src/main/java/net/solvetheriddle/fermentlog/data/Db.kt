@@ -9,29 +9,30 @@ import com.google.firebase.database.getValue
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import net.solvetheriddle.fermentlog.data.FirebaseTypeConverters.dateToTimestamp
 import net.solvetheriddle.fermentlog.domain.model.Batch
-import net.solvetheriddle.fermentlog.domain.model.Ingredient
-import net.solvetheriddle.fermentlog.domain.model.IngredientAmount
 import net.solvetheriddle.fermentlog.domain.model.Vessel
-import java.util.UUID
+import net.solvetheriddle.fermentlog.data.model.BatchData
+import net.solvetheriddle.fermentlog.data.model.IngredientAmountData
+import net.solvetheriddle.fermentlog.data.model.IngredientData
+import net.solvetheriddle.fermentlog.data.model.VesselData
 
 object Db {
     private const val TAG = "Db"
     private val database = FirebaseDatabase.getInstance()
     private val batchesRef = database.getReference("batches")
+    private val vesselsRef = database.getReference("vessels")
 
     // For preview and testing only
-    val sampleVessel = Vessel("v1", "Glass Jar", 2.0)
-    val sampleIngredient = Ingredient("i1", "Tea")
-    val sampleIngredientAmount = IngredientAmount(sampleIngredient, "8 spoons")
+    val sampleVessel = VesselData("v1", "Glass Jar", 2.0)
+    val sampleIngredient = IngredientData("i1", "Tea")
+    val sampleIngredientAmount = IngredientAmountData(sampleIngredient, "8 spoons")
 
-    fun getBatchesFlow(): Flow<List<Batch>> = callbackFlow {
+    fun getBatchesFlow(): Flow<List<BatchData>> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val batches = mutableListOf<Batch>()
+                val batches = mutableListOf<BatchData>()
                 for (batchSnapshot in snapshot.children) {
-                    batchSnapshot.getValue<Batch>()?.let { batch ->
+                    batchSnapshot.getValue<BatchData>()?.let { batch ->
                         batches.add(batch)
                     }
                 }
@@ -51,26 +52,55 @@ object Db {
     }
 
     fun addBatch(batch: Batch) {
-        val id = batch.id.ifEmpty { UUID.randomUUID().toString() }
-        val batchWithId = if (batch.id.isEmpty()) batch.copy(id = id) else batch
-
-        // Store the batch with proper date handling
-        val batchRef = batchesRef.child(id)
-        batchRef.setValue(batchWithId)
-
-        // Handle date serialization separately
-        batchRef.child("startDateTimestamp").setValue(dateToTimestamp(batchWithId.startDate))
+        val batchRef = batchesRef.child(batch.id)
+        batchRef.setValue(BatchData(batch))
     }
 
     fun updateBatch(batch: Batch) {
         val batchRef = batchesRef.child(batch.id)
         batchRef.setValue(batch)
-
-        // Handle date serialization separately
-        batchRef.child("startDateTimestamp").setValue(dateToTimestamp(batch.startDate))
     }
 
     fun deleteBatch(batchId: String) {
         batchesRef.child(batchId).removeValue()
+    }
+
+    // Vessel operations
+    fun getVesselsFlow(): Flow<List<VesselData>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val vessels = mutableListOf<VesselData>()
+                for (vesselSnapshot in snapshot.children) {
+                    vesselSnapshot.getValue<VesselData>()?.let { vessel ->
+                        vessels.add(vessel)
+                    }
+                }
+                trySend(vessels)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(TAG, "Error getting vessels: ${error.message}")
+            }
+        }
+
+        vesselsRef.addValueEventListener(listener)
+
+        awaitClose {
+            vesselsRef.removeEventListener(listener)
+        }
+    }
+
+    fun addVessel(vessel: Vessel) {
+        val vesselData = VesselData(vessel.id, vessel.name, vessel.capacity)
+        vesselsRef.child(vesselData.id).setValue(vesselData)
+    }
+
+    fun updateVessel(vessel: Vessel) {
+        val vesselData = VesselData(vessel.id, vessel.name, vessel.capacity)
+        vesselsRef.child(vesselData.id).setValue(vesselData)
+    }
+
+    fun deleteVessel(vesselId: String) {
+        vesselsRef.child(vesselId).removeValue()
     }
 }
