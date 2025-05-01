@@ -9,6 +9,14 @@ data class VesselData(
     val name: String = "undefined",
     val capacity: Double? = null
 ) {
+    fun toDomain(): Vessel {
+        return Vessel(
+            id = id,
+            name = name,
+            capacity = capacity
+        )
+    }
+
     constructor(vessel: Vessel) : this(
         id = vessel.id,
         name = vessel.name,

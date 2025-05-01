@@ -10,36 +10,11 @@ data class Batch(
     val name: String,
     val status: Status = Status.ACTIVE,
     val phase: BrewingPhase = BrewingPhase.PRIMARY,
-    val startDateTimestamp: Long,
+    val startDate: LocalDate,
     val vessel: Vessel,
     val ingredients: List<IngredientAmount> = emptyList(),
     val parentId: String? = null
-) {
-
-    /**
-     * Constructor for creating a new batch.
-     */
-    constructor(
-        startDateTimestamp: Long,
-        vessel: Vessel,
-        ingredients: List<IngredientAmount> = emptyList(),
-        parentId: String? = null
-    ) : this(
-            name = getDefaultName(startDateTimestamp, vessel),
-            startDateTimestamp = startDateTimestamp,
-            vessel = vessel,
-            ingredients = ingredients,
-            parentId = parentId
-        )
-
-    companion object {
-        private fun getDefaultName(startDateTimestamp: Long, vessel: Vessel): String {
-            val date = Date(startDateTimestamp)
-            val localDate: LocalDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-            return "${vessel.name} (${localDate.dayOfMonth} ${localDate.month.name})"
-        }
-    }
-}
+)
 
 enum class Status {
     UNDEFINED,

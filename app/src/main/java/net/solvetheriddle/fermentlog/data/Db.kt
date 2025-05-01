@@ -9,31 +9,27 @@ import com.google.firebase.database.getValue
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import net.solvetheriddle.fermentlog.domain.model.Batch
-import net.solvetheriddle.fermentlog.domain.model.Vessel
 import net.solvetheriddle.fermentlog.data.model.BatchData
-import net.solvetheriddle.fermentlog.data.model.IngredientAmountData
 import net.solvetheriddle.fermentlog.data.model.IngredientData
 import net.solvetheriddle.fermentlog.data.model.VesselData
+import net.solvetheriddle.fermentlog.domain.model.Batch
+import net.solvetheriddle.fermentlog.domain.model.Ingredient
+import net.solvetheriddle.fermentlog.domain.model.Vessel
 
 object Db {
     private const val TAG = "Db"
     private val database = FirebaseDatabase.getInstance()
     private val batchesRef = database.getReference("batches")
     private val vesselsRef = database.getReference("vessels")
+    private val ingredientsRef = database.getReference("ingredients")
 
-    // For preview and testing only
-    val sampleVessel = VesselData("v1", "Glass Jar", 2.0)
-    val sampleIngredient = IngredientData("i1", "Tea")
-    val sampleIngredientAmount = IngredientAmountData(sampleIngredient, "8 spoons")
-
-    fun getBatchesFlow(): Flow<List<BatchData>> = callbackFlow {
+    fun getBatchesFlow(): Flow<List<Batch>> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val batches = mutableListOf<BatchData>()
+                val batches = mutableListOf<Batch>()
                 for (batchSnapshot in snapshot.children) {
                     batchSnapshot.getValue<BatchData>()?.let { batch ->
-                        batches.add(batch)
+                        batches.add(batch.toDomain())
                     }
                 }
                 trySend(batches)
@@ -66,13 +62,13 @@ object Db {
     }
 
     // Vessel operations
-    fun getVesselsFlow(): Flow<List<VesselData>> = callbackFlow {
+    fun getVesselsFlow(): Flow<List<Vessel>> = callbackFlow {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val vessels = mutableListOf<VesselData>()
+                val vessels = mutableListOf<Vessel>()
                 for (vesselSnapshot in snapshot.children) {
-                    vesselSnapshot.getValue<VesselData>()?.let { vessel ->
-                        vessels.add(vessel)
+                    vesselSnapshot.getValue<VesselData>()?.let { vesselData ->
+                        vessels.add(vesselData.toDomain())
                     }
                 }
                 trySend(vessels)
@@ -102,5 +98,44 @@ object Db {
 
     fun deleteVessel(vesselId: String) {
         vesselsRef.child(vesselId).removeValue()
+    }
+
+    // Ingredient operations
+    fun getIngredientsFlow(): Flow<List<Ingredient>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val ingredients = mutableListOf<Ingredient>()
+                for (ingredientSnapshot in snapshot.children) {
+                    ingredientSnapshot.getValue<IngredientData>()?.let { ingredientData ->
+                        ingredients.add(ingredientData.toDomain())
+                    }
+                }
+                trySend(ingredients)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e(TAG, "Error getting ingredients: ${error.message}")
+            }
+        }
+
+        ingredientsRef.addValueEventListener(listener)
+
+        awaitClose {
+            ingredientsRef.removeEventListener(listener)
+        }
+    }
+
+    fun addIngredient(ingredient: Ingredient) {
+        val ingredientData = IngredientData(ingredient.id, ingredient.name)
+        ingredientsRef.child(ingredientData.id).setValue(ingredientData)
+    }
+
+    fun updateIngredient(ingredient: Ingredient) {
+        val ingredientData = IngredientData(ingredient.id, ingredient.name)
+        ingredientsRef.child(ingredientData.id).setValue(ingredientData)
+    }
+
+    fun deleteIngredient(ingredientId: String) {
+        ingredientsRef.child(ingredientId).removeValue()
     }
 }

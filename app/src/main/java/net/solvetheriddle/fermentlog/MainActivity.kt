@@ -24,7 +24,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import net.solvetheriddle.fermentlog.navigation.AppBottomNavigation
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -42,15 +41,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.ConfigurationCompat
 import net.solvetheriddle.fermentlog.data.Db
-import net.solvetheriddle.fermentlog.data.model.BatchData
 import net.solvetheriddle.fermentlog.domain.model.Batch
 import net.solvetheriddle.fermentlog.domain.model.BrewingPhase
+import net.solvetheriddle.fermentlog.domain.model.Ingredient
+import net.solvetheriddle.fermentlog.domain.model.IngredientAmount
 import net.solvetheriddle.fermentlog.domain.model.Status
+import net.solvetheriddle.fermentlog.domain.model.Vessel
+import net.solvetheriddle.fermentlog.navigation.AppBottomNavigation
 import net.solvetheriddle.fermentlog.ui.screens.AddBatchScreen
+import net.solvetheriddle.fermentlog.ui.screens.IngredientsScreen
 import net.solvetheriddle.fermentlog.ui.screens.VesselsScreen
 import net.solvetheriddle.fermentlog.ui.theme.FermentTheme
-import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Date
 import java.util.Locale
 
@@ -60,9 +65,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FermentTheme {
-                val activeBatches = remember { mutableStateListOf<BatchData>() }
+                val activeBatches = remember { mutableStateListOf<Batch>() }
                 val showAddBatchScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
                 val showVesselsScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
+                val showIngredientsScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
 
                 // Collect batches from Firebase
                 LaunchedEffect(Unit) {
@@ -88,9 +94,19 @@ class MainActivity : ComponentActivity() {
                                 showVesselsScreen.value = false 
                             },
                             onNavigateToIngredients = { 
-                                // Handle navigation to ingredients 
                                 showVesselsScreen.value = false
-                                // Add code to show ingredients screen when implemented
+                                showIngredientsScreen.value = true
+                            }
+                        )
+                    }
+                    showIngredientsScreen.value -> {
+                        IngredientsScreen(
+                            onNavigateToActive = {
+                                showIngredientsScreen.value = false
+                            },
+                            onNavigateToVessels = {
+                                showIngredientsScreen.value = false
+                                showVesselsScreen.value = true
                             }
                         )
                     }
@@ -106,7 +122,7 @@ class MainActivity : ComponentActivity() {
                                 AppBottomNavigation(
                                     currentRoute = "active",
                                     onNavigateToActive = { /* Already on active screen */ },
-                                    onNavigateToIngredients = { /* Handle navigation to ingredients */ },
+                                    onNavigateToIngredients = { showIngredientsScreen.value = true },
                                     onNavigateToVessels = { showVesselsScreen.value = true }
                                 )
                             }
@@ -170,8 +186,17 @@ fun BatchCard(batch: Batch) {
 @Composable
 @ReadOnlyComposable
 fun formatDate(date: LocalDate): String {
-    val formatter = SimpleDateFormat("MMM dd, yyyy", getLocale())
-    return formatter.format(date)
+    // Option 1: Using a predefined format
+    val predefinedFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+    //val predefinedFormatter = DateTimeFormatter.ISO_DATE // Example of a different predefined format
+    val formattedDate = date.format(predefinedFormatter.withLocale(getLocale()))
+
+    // Option 2: Using a custom format
+//    val customFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", getLocale())
+//    val formattedDate2 = date.format(customFormatter)
+
+    // You can return any of the formatted date
+    return formattedDate
 }
 
 @Composable
@@ -185,24 +210,28 @@ fun getLocale(): Locale? {
 @Composable
 fun MainScreenPreview() {
     // Create sample data for preview
+    val sampleVessel = Vessel("v1", "Glass Jar", 2.0)
+    val sampleIngredient = Ingredient("i1", "Tea")
+    val sampleIngredientAmount = IngredientAmount(sampleIngredient, "8 spoons")
+
     val sampleBatches = listOf(
         Batch(
             id = "b1",
             name = "Kombucha Batch 1",
             status = Status.ACTIVE,
             phase = BrewingPhase.PRIMARY,
-            startDateTimestamp = Date().time,
-            vessel = Db.sampleVessel,
-            ingredients = listOf(Db.sampleIngredientAmount)
+            startDate = Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+            vessel = sampleVessel,
+            ingredients = listOf(sampleIngredientAmount)
         ),
         Batch(
             id = "b2",
             name = "Kombucha Batch 2",
             status = Status.ACTIVE,
             phase = BrewingPhase.SECONDARY,
-            startDateTimestamp = Date().time,
-            vessel = Db.sampleVessel,
-            ingredients = listOf(Db.sampleIngredientAmount)
+            startDate = Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+            vessel = sampleVessel,
+            ingredients = listOf(sampleIngredientAmount)
         )
     )
     MainScreen(sampleBatches)
