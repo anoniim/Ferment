@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,19 +20,25 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -65,73 +72,51 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FermentTheme {
-                val activeBatches = remember { mutableStateListOf<Batch>() }
-                val showAddBatchScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
-                val showVesselsScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
-                val showIngredientsScreen = remember { androidx.compose.runtime.mutableStateOf(false) }
-
-                // Collect batches from Firebase
-                LaunchedEffect(Unit) {
-                    Db.getBatchesFlow().collect { batches ->
-                        activeBatches.clear()
-                        activeBatches.addAll(batches.filter { it.status == Status.ACTIVE })
-                    }
-                }
-
-                when {
-                    showAddBatchScreen.value -> {
-                        AddBatchScreen(
-                            onNavigateBack = { showAddBatchScreen.value = false },
-                            onBatchAdded = { newBatch ->
-                                Db.addBatch(newBatch)
-                                // The batch will be added to the list via the Flow collection
+                // A surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    var isLoggedIn by remember { mutableStateOf(false) }
+                    
+                    if (isLoggedIn) {
+                        // Main app content
+                        var showAddBatchScreen by remember { mutableStateOf(false) }
+                        var showVesselsScreen by remember { mutableStateOf(false) }
+                        var showIngredientsScreen by remember { mutableStateOf(false) }
+                        var activeBatches by remember { mutableStateOf(emptyList<Batch>()) }
+                        
+                        // Collect batches from Firebase
+                        LaunchedEffect(Unit) {
+                            Db.getBatchesFlow().collect { batches ->
+                                activeBatches = batches.filter { it.status == Status.ACTIVE }
                             }
-                        )
-                    }
-                    showVesselsScreen.value -> {
-                        VesselsScreen(
-                            onNavigateToActive = { 
-                                showVesselsScreen.value = false 
-                            },
-                            onNavigateToIngredients = { 
-                                showVesselsScreen.value = false
-                                showIngredientsScreen.value = true
-                            }
-                        )
-                    }
-                    showIngredientsScreen.value -> {
-                        IngredientsScreen(
-                            onNavigateToActive = {
-                                showIngredientsScreen.value = false
-                            },
-                            onNavigateToVessels = {
-                                showIngredientsScreen.value = false
-                                showVesselsScreen.value = true
-                            }
-                        )
-                    }
-                    else -> {
-                        Scaffold(
-                            topBar = { TopAppBar(title = { Text("Active Batches") }) },
-                            floatingActionButton = {
-                                FloatingActionButton(onClick = { showAddBatchScreen.value = true }) {
-                                    Icon(Icons.Filled.Add, contentDescription = "Add Batch")
-                                }
-                            },
-                            bottomBar = {
-                                AppBottomNavigation(
-                                    currentRoute = "active",
-                                    onNavigateToActive = { /* Already on active screen */ },
-                                    onNavigateToIngredients = { showIngredientsScreen.value = true },
-                                    onNavigateToVessels = { showVesselsScreen.value = true }
-                                )
-                            }
-                        ) { innerPadding ->
-                            MainScreen(
+                        }
+                        
+                        // Main app screens
+                        when {
+                            showAddBatchScreen -> AddBatchScreen(
+                                onDismiss = { showAddBatchScreen = false },
+                                onBatchAdded = { showAddBatchScreen = false }
+                            )
+                            showVesselsScreen -> VesselsScreen(
+                                onDismiss = { showVesselsScreen = false }
+                            )
+                            showIngredientsScreen -> IngredientsScreen(
+                                onDismiss = { showIngredientsScreen = false }
+                            )
+                            else -> MainScreen(
                                 activeBatches = activeBatches,
-                                modifier = Modifier.padding(innerPadding)
+                                onAddBatch = { showAddBatchScreen = true },
+                                onManageVessels = { showVesselsScreen = true },
+                                onManageIngredients = { showIngredientsScreen = true }
                             )
                         }
+                    } else {
+                        // Login screen
+                        LoginScreen(
+                            onLoggedIn = { isLoggedIn = true }
+                        )
                     }
                 }
             }
