@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
@@ -41,12 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.solvetheriddle.fermentlog.data.Db
 import net.solvetheriddle.fermentlog.domain.model.Vessel
-import net.solvetheriddle.fermentlog.navigation.AppBottomNavigation
 
 @Composable
 fun VesselsScreen(
-    onNavigateToActive: () -> Unit,
-    onNavigateToIngredients: () -> Unit
+    onNavigateBack: () -> Unit
 ) {
     val vessels = remember { mutableStateListOf<Vessel>() }
     val showAddVesselDialog = remember { mutableStateOf(false) }
@@ -92,20 +91,21 @@ fun VesselsScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Vessels") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Vessels") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddVesselDialog.value = true }) {
                 Icon(Icons.Filled.Add, contentDescription = "Add Vessel")
             }
         },
-        bottomBar = {
-            AppBottomNavigation(
-                currentRoute = "vessels",
-                onNavigateToActive = onNavigateToActive,
-                onNavigateToIngredients = onNavigateToIngredients,
-                onNavigateToVessels = { /* Already on vessels screen */ }
-            )
-        }
     ) { innerPadding ->
         VesselsList(
             vessels = vessels,
@@ -117,7 +117,7 @@ fun VesselsScreen(
 }
 
 @Composable
-fun VesselsList(
+private fun VesselsList(
     vessels: List<Vessel>,
     onEditVessel: (Vessel) -> Unit,
     onDeleteVessel: (Vessel) -> Unit,
@@ -140,7 +140,7 @@ fun VesselsList(
 }
 
 @Composable
-fun VesselCard(
+private fun VesselCard(
     vessel: Vessel,
     onEditVessel: () -> Unit,
     onDeleteVessel: () -> Unit
@@ -280,16 +280,6 @@ fun AddEditVesselDialog(
 
 @Preview(showBackground = true)
 @Composable
-fun VesselsScreenPreview() {
-    val sampleVessels = listOf(
-        Vessel("v1", "Glass Jar", 2.0),
-        Vessel("v2", "Ceramic Crock", 5.0),
-        Vessel("v3", "Plastic Container", 1.5)
-    )
-
-    VesselsList(
-        vessels = sampleVessels,
-        onEditVessel = {},
-        onDeleteVessel = {}
-    )
+private fun VesselsScreenPreview() {
+    VesselsScreen(onNavigateBack = {})
 }
