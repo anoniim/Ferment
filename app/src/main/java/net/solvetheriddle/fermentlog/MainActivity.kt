@@ -13,12 +13,19 @@ import androidx.compose.runtime.remember
 import net.solvetheriddle.fermentlog.data.Db
 import net.solvetheriddle.fermentlog.domain.model.Batch
 import net.solvetheriddle.fermentlog.domain.model.Status
-import net.solvetheriddle.fermentlog.ui.navigation.AppNavigation
+import net.solvetheriddle.fermentlog.auth.AuthenticationManager
 import net.solvetheriddle.fermentlog.ui.theme.FermentTheme
+import net.solvetheriddle.fermentlog.ui.navigation.AppNavigation
+
 
 class MainActivity : ComponentActivity() {
+    private lateinit var authManager: AuthenticationManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        authManager = AuthenticationManager(this)
+
         enableEdgeToEdge()
         setContent {
             FermentTheme {
@@ -32,7 +39,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                AppNavigation(activeBatches = activeBatches)
+                AppNavigation(authManager, activeBatches = activeBatches)
             }
         }
     }

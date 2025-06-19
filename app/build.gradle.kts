@@ -62,6 +62,9 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.appcheck)
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.ui.auth)
+    implementation(libs.play.services.auth)
 
     // Test
     testImplementation(libs.junit)

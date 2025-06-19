@@ -21,6 +21,7 @@ fun SettingsScreen(
     onNavigateToIngredients: () -> Unit,
     onNavigateToVessels: () -> Unit,
     onNavigateBack: () -> Unit,
+    onSignOut: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -51,6 +52,15 @@ fun SettingsScreen(
                     summary = "Manage your list of vessels",
                     icon = R.drawable.vessels,
                     onClick = onNavigateToVessels
+                )
+            }
+
+            PreferenceCategory(title = "Account") {
+                Preference(
+                    title = "Log out",
+                    summary = "Sign out of your account",
+                    icon = R.drawable.logout,
+                    onClick = onSignOut
                 )
             }
         }
