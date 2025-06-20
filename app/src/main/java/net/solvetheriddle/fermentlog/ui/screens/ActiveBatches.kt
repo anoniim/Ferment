@@ -136,7 +136,10 @@ private fun BatchInfo(batch: Batch) {
 
 @Composable
 private fun PrimaryIngredient(batch: Batch) {
-    Text(text = batch.primaryIngredients.first().ingredient.name, fontSize = 14.sp)
+    val firstIngredient = batch.primaryIngredients.firstOrNull()
+    if (firstIngredient != null) {
+        Text(text = firstIngredient.ingredient.name, fontSize = 14.sp)
+    }
 }
 
 @Composable
