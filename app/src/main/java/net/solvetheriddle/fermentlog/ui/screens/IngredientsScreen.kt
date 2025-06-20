@@ -5,15 +5,14 @@ package net.solvetheriddle.fermentlog.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
@@ -41,12 +40,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import net.solvetheriddle.fermentlog.data.Db
 import net.solvetheriddle.fermentlog.domain.model.Ingredient
-import net.solvetheriddle.fermentlog.navigation.AppBottomNavigation
 
 @Composable
 fun IngredientsScreen(
-    onNavigateToActive: () -> Unit,
-    onNavigateToVessels: () -> Unit
+    onNavigateBack: () -> Unit
 ) {
     val ingredients = remember { mutableStateListOf<Ingredient>() }
     val showAddIngredientDialog = remember { mutableStateOf(false) }
@@ -92,20 +89,21 @@ fun IngredientsScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Ingredients") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Ingredients") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddIngredientDialog.value = true }) {
                 Icon(Icons.Filled.Add, contentDescription = "Add Ingredient")
             }
         },
-        bottomBar = {
-            AppBottomNavigation(
-                currentRoute = "ingredients",
-                onNavigateToActive = onNavigateToActive,
-                onNavigateToIngredients = { /* Already on ingredients screen */ },
-                onNavigateToVessels = onNavigateToVessels
-            )
-        }
     ) { innerPadding ->
         IngredientsList(
             ingredients = ingredients,
@@ -117,7 +115,7 @@ fun IngredientsScreen(
 }
 
 @Composable
-fun IngredientsList(
+private fun IngredientsList(
     ingredients: List<Ingredient>,
     onEditIngredient: (Ingredient) -> Unit,
     onDeleteIngredient: (Ingredient) -> Unit,
@@ -140,7 +138,7 @@ fun IngredientsList(
 }
 
 @Composable
-fun IngredientCard(
+private fun IngredientCard(
     ingredient: Ingredient,
     onEditIngredient: () -> Unit,
     onDeleteIngredient: () -> Unit
@@ -258,16 +256,6 @@ fun AddEditIngredientDialog(
 
 @Preview(showBackground = true)
 @Composable
-fun IngredientsScreenPreview() {
-    val sampleIngredients = listOf(
-        Ingredient("i1", "Tea"),
-        Ingredient("i2", "Sugar"),
-        Ingredient("i3", "SCOBY")
-    )
-
-    IngredientsList(
-        ingredients = sampleIngredients,
-        onEditIngredient = {},
-        onDeleteIngredient = {}
-    )
+private fun IngredientsScreenPreview() {
+    IngredientsScreen(onNavigateBack = {})
 }

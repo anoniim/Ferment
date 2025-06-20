@@ -50,6 +50,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.material)
 
     // Debug
     debugImplementation(libs.androidx.ui.tooling)
@@ -60,6 +62,9 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.appcheck)
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.ui.auth)
+    implementation(libs.play.services.auth)
 
     // Test
     testImplementation(libs.junit)

@@ -12,7 +12,7 @@ import java.util.Date
 @Keep
 data class BatchData(
     val id: String = "undefined",
-    val name: String = "undefined",
+    val name: String? = null,
     val status: Status = Status.UNDEFINED,
     val phase: BrewingPhase = BrewingPhase.UNDEFINED,
     val startDateTimestamp: Long = 0,
@@ -28,19 +28,19 @@ data class BatchData(
             phase = phase,
             startDate = Date(startDateTimestamp).toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
             vessel = vessel.toDomain(),
-            ingredients = ingredients.map { it.toDomain() },
+            primaryIngredients = ingredients.map { it.toDomain() },
             parentId = parentId
         )
     }
 
     constructor(batch: Batch) : this(
         id = batch.id,
-        name = batch.name.ifBlank { getDefaultName(batch.startDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), batch.vessel) },
+        name = batch.name,
         status = batch.status,
         phase = batch.phase,
         startDateTimestamp = batch.startDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
         vessel = VesselData(batch.vessel),
-        ingredients = batch.ingredients.map { IngredientAmountData(it) },
+        ingredients = batch.primaryIngredients.map { IngredientAmountData(it) },
         parentId = batch.parentId
     )
 

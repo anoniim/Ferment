@@ -1,6 +1,7 @@
 package net.solvetheriddle.fermentlog.data
 
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -19,11 +20,15 @@ import net.solvetheriddle.fermentlog.domain.model.Vessel
 object Db {
     private const val TAG = "Db"
     private val database = FirebaseDatabase.getInstance()
-    private val batchesRef = database.getReference("batches")
-    private val vesselsRef = database.getReference("vessels")
-    private val ingredientsRef = database.getReference("ingredients")
 
     fun getBatchesFlow(): Flow<List<Batch>> = callbackFlow {
+        val batchesRef = getUserNode()?.child("batches")
+        if (batchesRef == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val batches = mutableListOf<Batch>()
@@ -48,21 +53,26 @@ object Db {
     }
 
     fun addBatch(batch: Batch) {
-        val batchRef = batchesRef.child(batch.id)
-        batchRef.setValue(BatchData(batch))
+        getUserNode()?.child("batches")?.child(batch.id)?.setValue(BatchData(batch))
     }
 
     fun updateBatch(batch: Batch) {
-        val batchRef = batchesRef.child(batch.id)
-        batchRef.setValue(batch)
+        getUserNode()?.child("batches")?.child(batch.id)?.setValue(batch)
     }
 
     fun deleteBatch(batchId: String) {
-        batchesRef.child(batchId).removeValue()
+        getUserNode()?.child("batches")?.child(batchId)?.removeValue()
     }
 
     // Vessel operations
     fun getVesselsFlow(): Flow<List<Vessel>> = callbackFlow {
+        val vesselsRef = getUserNode()?.child("vessels")
+        if (vesselsRef == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val vessels = mutableListOf<Vessel>()
@@ -88,20 +98,27 @@ object Db {
 
     fun addVessel(vessel: Vessel) {
         val vesselData = VesselData(vessel.id, vessel.name, vessel.capacity)
-        vesselsRef.child(vesselData.id).setValue(vesselData)
+        getUserNode()?.child("vessels")?.child(vesselData.id)?.setValue(vesselData)
     }
 
     fun updateVessel(vessel: Vessel) {
         val vesselData = VesselData(vessel.id, vessel.name, vessel.capacity)
-        vesselsRef.child(vesselData.id).setValue(vesselData)
+        getUserNode()?.child("vessels")?.child(vesselData.id)?.setValue(vesselData)
     }
 
     fun deleteVessel(vesselId: String) {
-        vesselsRef.child(vesselId).removeValue()
+        getUserNode()?.child("vessels")?.child(vesselId)?.removeValue()
     }
 
     // Ingredient operations
     fun getIngredientsFlow(): Flow<List<Ingredient>> = callbackFlow {
+        val ingredientsRef = getUserNode()?.child("ingredients")
+        if (ingredientsRef == null) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val ingredients = mutableListOf<Ingredient>()
@@ -127,15 +144,19 @@ object Db {
 
     fun addIngredient(ingredient: Ingredient) {
         val ingredientData = IngredientData(ingredient.id, ingredient.name)
-        ingredientsRef.child(ingredientData.id).setValue(ingredientData)
+        getUserNode()?.child("ingredients")?.child(ingredientData.id)?.setValue(ingredientData)
     }
 
     fun updateIngredient(ingredient: Ingredient) {
         val ingredientData = IngredientData(ingredient.id, ingredient.name)
-        ingredientsRef.child(ingredientData.id).setValue(ingredientData)
+        getUserNode()?.child("ingredients")?.child(ingredientData.id)?.setValue(ingredientData)
     }
 
     fun deleteIngredient(ingredientId: String) {
-        ingredientsRef.child(ingredientId).removeValue()
+        getUserNode()?.child("ingredients")?.child(ingredientId)?.removeValue()
+    }
+
+    private fun getUserNode() = FirebaseAuth.getInstance().currentUser?.uid?.let {
+        database.getReference("users").child(it)
     }
 }

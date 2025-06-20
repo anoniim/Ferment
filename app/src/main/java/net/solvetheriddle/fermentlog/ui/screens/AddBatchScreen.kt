@@ -306,7 +306,7 @@ fun AddBatchScreen(
                             name = batchName,
                             startDate = Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
                             vessel = vessel,
-                            ingredients = ingredientAmounts
+                            primaryIngredients = ingredientAmounts
                         )
                         onBatchAdded(newBatch)
                         onNavigateBack()
