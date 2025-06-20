@@ -8,13 +8,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseUser
-import net.solvetheriddle.fermentlog.LoginScreen
 import net.solvetheriddle.fermentlog.auth.AuthenticationManager
 import net.solvetheriddle.fermentlog.data.Db
 import net.solvetheriddle.fermentlog.domain.model.Batch
 import net.solvetheriddle.fermentlog.ui.screens.ActiveBatchesScreen
 import net.solvetheriddle.fermentlog.ui.screens.AddBatchScreen
 import net.solvetheriddle.fermentlog.ui.screens.IngredientsScreen
+import net.solvetheriddle.fermentlog.ui.screens.LoginScreen
 import net.solvetheriddle.fermentlog.ui.screens.SettingsScreen
 import net.solvetheriddle.fermentlog.ui.screens.VesselsScreen
 

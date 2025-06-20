@@ -1,4 +1,4 @@
-package net.solvetheriddle.fermentlog
+package net.solvetheriddle.fermentlog.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import net.solvetheriddle.fermentlog.R
 import net.solvetheriddle.fermentlog.auth.AuthenticationManager
 import net.solvetheriddle.fermentlog.ui.theme.FermentTheme
 

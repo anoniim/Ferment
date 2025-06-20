@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -42,9 +42,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import net.solvetheriddle.fermentlog.data.Db
 import net.solvetheriddle.fermentlog.domain.model.Batch
+import net.solvetheriddle.fermentlog.domain.model.BrewingPhase
 import net.solvetheriddle.fermentlog.domain.model.Ingredient
 import net.solvetheriddle.fermentlog.domain.model.IngredientAmount
-import net.solvetheriddle.fermentlog.domain.model.BrewingPhase
 import net.solvetheriddle.fermentlog.domain.model.Vessel
 import java.time.ZoneId
 import java.util.Date
@@ -98,7 +98,7 @@ fun AddBatchScreen(
                 title = { Text("Add New Batch") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
