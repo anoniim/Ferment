@@ -8,8 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import net.solvetheriddle.fermentlog.data.Db
 import net.solvetheriddle.fermentlog.domain.model.Batch
 import net.solvetheriddle.fermentlog.domain.model.Status
@@ -29,19 +29,18 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             FermentTheme {
-                val activeBatches = remember { mutableStateListOf<Batch>() }
+                val authManager = remember { AuthenticationManager() }
 
-                // Collect batches from Firebase
+                // Start listening for auth state changes
                 LaunchedEffect(Unit) {
-                    Db.getBatchesFlow().collect { batches ->
-                        activeBatches.clear()
-                        activeBatches.addAll(batches.filter { it.status == Status.ACTIVE }) // TODO Order by phase, then duration
-                    }
+                    authManager.startListening()
                 }
+
+                val batches by Db.getBatchesFlow().collectAsState(initial = emptyList())
+                val activeBatches = batches.filter { it.status == Status.ACTIVE } // TODO Order by phase, then duration
 
                 AppNavigation(authManager, activeBatches = activeBatches)
             }
         }
     }
 }
-

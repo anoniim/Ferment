@@ -4,12 +4,14 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseException
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import net.solvetheriddle.fermentlog.data.model.BatchData
 import net.solvetheriddle.fermentlog.data.model.IngredientData
 import net.solvetheriddle.fermentlog.data.model.VesselData
@@ -21,7 +23,24 @@ object Db {
     private const val TAG = "Db"
     private val database = FirebaseDatabase.getInstance()
 
-    fun getBatchesFlow(): Flow<List<Batch>> = callbackFlow {
+    fun getBatchesFlow(): Flow<List<Batch>> {
+        return getVesselsFlow().combine(getBatchesDataFlow()) { vessels, batchesData ->
+            val vesselsMap = vessels.associateBy { it.id }
+            batchesData.mapNotNull { batchData ->
+                val vessel = vesselsMap[batchData.vesselId]
+                if (vessel != null) {
+                    batchData.toDomain(vessel)
+                } else {
+                    if (batchData.vesselId != null) {
+                        Log.w(TAG, "Vessel with id ${batchData.vesselId} not found for batch ${batchData.id}")
+                    }
+                    null
+                }
+            }
+        }
+    }
+
+    private fun getBatchesDataFlow(): Flow<List<BatchData>> = callbackFlow {
         val batchesRef = getUserNode()?.child("batches")
         if (batchesRef == null) {
             trySend(emptyList())
@@ -31,25 +50,21 @@ object Db {
 
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val batches = mutableListOf<Batch>()
+                val batches = mutableListOf<BatchData>()
                 for (batchSnapshot in snapshot.children) {
                     batchSnapshot.getValue<BatchData>()?.let { batch ->
-                        batches.add(batch.toDomain())
+                        batches.add(batch)
                     }
                 }
                 trySend(batches)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Log.e(TAG, "Error getting batches: ${error.message}")
+                Log.e(TAG, "Error getting batches data: ${error.message}")
             }
         }
-
         batchesRef.addValueEventListener(listener)
-
-        awaitClose {
-            batchesRef.removeEventListener(listener)
-        }
+        awaitClose { batchesRef.removeEventListener(listener) }
     }
 
     fun addBatch(batch: Batch) {
@@ -57,7 +72,7 @@ object Db {
     }
 
     fun updateBatch(batch: Batch) {
-        getUserNode()?.child("batches")?.child(batch.id)?.setValue(batch)
+        getUserNode()?.child("batches")?.child(batch.id)?.setValue(BatchData(batch))
     }
 
     fun deleteBatch(batchId: String) {
@@ -77,8 +92,13 @@ object Db {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val vessels = mutableListOf<Vessel>()
                 for (vesselSnapshot in snapshot.children) {
-                    vesselSnapshot.getValue<VesselData>()?.let { vesselData ->
-                        vessels.add(vesselData.toDomain())
+                    try {
+                        vesselSnapshot.getValue<VesselData>()?.let { vesselData ->
+                            vessels.add(vesselData.toDomain())
+                        }
+                    } catch (e: DatabaseException) {
+                        Log.w(TAG, "Failed to parse vessel data for key: ${vesselSnapshot.key}", e)
+                        // Here you could add logic to handle or clean up the malformed data
                     }
                 }
                 trySend(vessels)

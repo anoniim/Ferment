@@ -6,8 +6,9 @@ import net.solvetheriddle.fermentlog.domain.model.BrewingPhase
 import net.solvetheriddle.fermentlog.domain.model.Status
 import net.solvetheriddle.fermentlog.domain.model.Vessel
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.Date
+import java.time.Instant
 
 @Keep
 data class BatchData(
@@ -16,18 +17,18 @@ data class BatchData(
     val status: Status = Status.UNDEFINED,
     val phase: BrewingPhase = BrewingPhase.UNDEFINED,
     val startDateTimestamp: Long = 0,
-    val vessel: VesselData = VesselData(),
+    val vesselId: String? = null,
     val ingredients: List<IngredientAmountData> = emptyList(),
     val parentId: String? = null
 ) {
-    fun toDomain(): Batch {
+    fun toDomain(vessel: Vessel): Batch {
         return Batch(
             id = id,
             name = name,
             status = status,
             phase = phase,
-            startDate = Date(startDateTimestamp).toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-            vessel = vessel.toDomain(),
+            startDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(startDateTimestamp), ZoneId.systemDefault()).toLocalDate(),
+            vessel = vessel,
             primaryIngredients = ingredients.map { it.toDomain() },
             parentId = parentId
         )
@@ -39,16 +40,8 @@ data class BatchData(
         status = batch.status,
         phase = batch.phase,
         startDateTimestamp = batch.startDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
-        vessel = VesselData(batch.vessel),
+        vesselId = batch.vessel.id,
         ingredients = batch.primaryIngredients.map { IngredientAmountData(it) },
         parentId = batch.parentId
     )
-
-    companion object {
-        private fun getDefaultName(startDateTimestamp: Long, vessel: Vessel): String {
-            val date = Date(startDateTimestamp)
-            val localDate: LocalDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-            return "${vessel.name} (${localDate.dayOfMonth} ${localDate.month.name})"
-        }
-    }
 }
