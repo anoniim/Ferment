@@ -66,6 +66,10 @@ dependencies {
     implementation(libs.firebase.ui.auth)
     implementation(libs.play.services.auth)
 
+    // Koin
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+
     // Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

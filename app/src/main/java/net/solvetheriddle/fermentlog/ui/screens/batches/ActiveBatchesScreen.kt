@@ -1,4 +1,4 @@
-package net.solvetheriddle.fermentlog.ui.screens
+package net.solvetheriddle.fermentlog.ui.screens.batches
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,34 +31,30 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.ConfigurationCompat
 import net.solvetheriddle.fermentlog.domain.model.Batch
-import net.solvetheriddle.fermentlog.domain.model.BrewingPhase
-import net.solvetheriddle.fermentlog.domain.model.Ingredient
-import net.solvetheriddle.fermentlog.domain.model.IngredientAmount
-import net.solvetheriddle.fermentlog.domain.model.Status
-import net.solvetheriddle.fermentlog.domain.model.Vessel
+import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActiveBatchesScreen(
-    activeBatches: List<Batch>,
     onNavigateToSettings: () -> Unit,
     onNavigateToAddBatch: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: ActiveBatchesViewModel = koinViewModel(),
 ) {
+    val activeBatches by viewModel.activeBatches.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -189,48 +185,4 @@ private fun formatDate(date: LocalDate): String {
 private fun getLocale(): Locale? {
     val configuration = LocalConfiguration.current
     return ConfigurationCompat.getLocales(configuration).get(0)
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun MainScreenPreview() {
-    // Create sample data for preview
-    val sampleVessel1 = Vessel("v1", "Poseidon", 2.0)
-    val sampleVessel2 = Vessel("v2", "Rákosníček", 2.0)
-    val sampleIngredient1 = Ingredient("i1", "Thai Nguyen green")
-    val sampleIngredient2 = Ingredient("i2", "Black with spices")
-    val sampleIngredient3 = Ingredient("i3", "Ginger")
-    val sampleIngredient4 = Ingredient("i4", "Sugar")
-    val sampleIngredientAmount1 = IngredientAmount(sampleIngredient1, "8 spoons")
-    val sampleIngredientAmount2 = IngredientAmount(sampleIngredient2, "10 spoons")
-    val sampleSecondaryIngredients = listOf(
-        IngredientAmount(sampleIngredient3, "5cm"),
-        IngredientAmount(sampleIngredient4, "10g"),
-    )
-
-    val sampleBatches = listOf(
-        Batch(
-            id = "b2",
-            name = "for Eli",
-            status = Status.ACTIVE,
-            phase = BrewingPhase.SECONDARY,
-            startDate = Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().minusDays(2),
-            vessel = sampleVessel2,
-            primaryIngredients = listOf(sampleIngredientAmount1),
-            secondaryIngredients = sampleSecondaryIngredients,
-        ),
-        Batch(
-            id = "b1",
-            status = Status.ACTIVE,
-            phase = BrewingPhase.PRIMARY,
-            startDate = Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().minusDays(34),
-            vessel = sampleVessel1,
-            primaryIngredients = listOf(sampleIngredientAmount2)
-        )
-    )
-    ActiveBatchesScreen(
-        activeBatches = sampleBatches, 
-        onNavigateToSettings = {},
-        onNavigateToAddBatch = {},
-    )
 }

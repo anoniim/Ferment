@@ -12,12 +12,13 @@ firebase-bom = "33.15.0"
 google-services = "4.4.2"
 material = "1.12.0"
 navigationCompose = "2.9.0"
+koin = "3.5.6"
 
 [libraries]
 # Firebase
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx" }
 firebase-ui-auth = { group = "com.firebaseui", name = "firebase-ui-auth", version = "9.0.0" }
-play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version = "21.2.0" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version = "21.3.0" }
 
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -40,6 +41,11 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-database = { group = "com.google.firebase", name = "firebase-database" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 firebase-appcheck = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
+
+# Koin
+koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
+koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
+
 material = { module = "com.google.android.material:material", version.ref = "material" }
 
 [plugins]

@@ -9,14 +9,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseUser
 import net.solvetheriddle.fermentlog.auth.AuthenticationManager
-import net.solvetheriddle.fermentlog.data.Db
-import net.solvetheriddle.fermentlog.domain.model.Batch
-import net.solvetheriddle.fermentlog.ui.screens.ActiveBatchesScreen
-import net.solvetheriddle.fermentlog.ui.screens.AddBatchScreen
-import net.solvetheriddle.fermentlog.ui.screens.IngredientsScreen
+import net.solvetheriddle.fermentlog.ui.screens.batches.ActiveBatchesScreen
+import net.solvetheriddle.fermentlog.ui.screens.batches.AddBatchScreen
+import net.solvetheriddle.fermentlog.ui.screens.settings.ingredients.IngredientsScreen
 import net.solvetheriddle.fermentlog.ui.screens.LoginScreen
-import net.solvetheriddle.fermentlog.ui.screens.SettingsScreen
-import net.solvetheriddle.fermentlog.ui.screens.VesselsScreen
+import net.solvetheriddle.fermentlog.ui.screens.settings.SettingsScreen
+import net.solvetheriddle.fermentlog.ui.screens.settings.vessels.VesselsScreen
 
 private const val LOGIN = "login"
 private const val ACTIVE_BATCHES = "active_batches"
@@ -26,7 +24,7 @@ private const val INGREDIENTS = "ingredients"
 private const val VESSELS = "vessels"
 
 @Composable
-fun AppNavigation(authManager: AuthenticationManager, activeBatches: List<Batch>) {
+fun AppNavigation(authManager: AuthenticationManager) {
 
     val navController = rememberNavController()
     val currentUser: FirebaseUser? by authManager.currentUser.collectAsState()
@@ -41,9 +39,8 @@ fun AppNavigation(authManager: AuthenticationManager, activeBatches: List<Batch>
         }
         composable(ACTIVE_BATCHES) {
             ActiveBatchesScreen(
-                activeBatches = activeBatches,
                 onNavigateToSettings = { navController.navigate(SETTINGS) },
-                onNavigateToAddBatch = { navController.navigate(ADD_BATCH) }
+                onNavigateToAddBatch = { navController.navigate(ADD_BATCH) },
             )
         }
         composable(SETTINGS) {
@@ -54,32 +51,20 @@ fun AppNavigation(authManager: AuthenticationManager, activeBatches: List<Batch>
                 onSignOut = {
                     authManager.signOut()
                     navController.navigate(LOGIN) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            inclusive = true
-                        }
+                        popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
             )
         }
         composable(INGREDIENTS) {
-            IngredientsScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
+            IngredientsScreen(navController = navController)
         }
         composable(VESSELS) {
-            VesselsScreen(
-                onNavigateBack = { navController.popBackStack() }
-            )
+            VesselsScreen(navController = navController)
         }
         composable(ADD_BATCH) {
-            AddBatchScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onBatchAdded = { newBatch ->
-                    Db.addBatch(newBatch)
-                    navController.popBackStack()
-                }
-            )
+            AddBatchScreen(navController = navController)
         }
     }
 }

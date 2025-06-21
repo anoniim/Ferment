@@ -1,12 +1,11 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package net.solvetheriddle.fermentlog.ui.screens
+package net.solvetheriddle.fermentlog.ui.screens.batches
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,6 +24,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,110 +34,76 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.material3.Divider
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
-import net.solvetheriddle.fermentlog.ui.screens.common.AddEditVesselDialog
-import net.solvetheriddle.fermentlog.data.Db
-import net.solvetheriddle.fermentlog.domain.model.Batch
-import net.solvetheriddle.fermentlog.domain.model.BrewingPhase
-import net.solvetheriddle.fermentlog.domain.model.Ingredient
-import net.solvetheriddle.fermentlog.domain.model.IngredientAmount
+import androidx.navigation.NavController
 import net.solvetheriddle.fermentlog.domain.model.Vessel
-import java.time.ZoneId
-import java.util.Date
+import net.solvetheriddle.fermentlog.ui.screens.common.AddEditVesselDialog
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AddBatchScreen(
-    onNavigateBack: () -> Unit,
-    onBatchAdded: (Batch) -> Unit
+    navController: NavController,
+    viewModel: AddBatchViewModel = koinViewModel()
 ) {
-    var batchName by remember { mutableStateOf("") }
-    val vessels = remember { mutableStateListOf<Vessel>() }
-    var selectedVessel by remember { mutableStateOf<Vessel?>(null) }
+    val batchName by viewModel.batchName.collectAsState()
+    val vessels by viewModel.vessels.collectAsState()
+    val selectedVessel by viewModel.selectedVessel.collectAsState()
     var showAddVesselDialog by remember { mutableStateOf(false) }
+    val batchAdded by viewModel.batchAdded.collectAsState()
 
     if (showAddVesselDialog) {
         AddEditVesselDialog(
             onDismiss = { showAddVesselDialog = false },
-            onSave = { newVessel ->
-                Db.addVessel(newVessel)
+            onSave = {
+                viewModel.addVessel(it)
                 showAddVesselDialog = false
             }
         )
     }
 
-    LaunchedEffect(Unit) {
-        var isInitialLoad = true
-        Db.getVesselsFlow().collect { fetchedVessels ->
-            val oldVessels = vessels.toList()
-            vessels.clear()
-            vessels.addAll(fetchedVessels)
-
-            if (isInitialLoad) {
-                selectedVessel = selectedVessel ?: fetchedVessels.firstOrNull()
-                isInitialLoad = false
-            } else {
-                if (fetchedVessels.size > oldVessels.size) {
-                    val newVessel = fetchedVessels.firstOrNull { fv -> oldVessels.none { ov -> ov.id == fv.id } }
-                    if (newVessel != null) {
-                        selectedVessel = newVessel
-                    }
-                }
-            }
+    LaunchedEffect(batchAdded) {
+        if (batchAdded) {
+            navController.popBackStack()
+            viewModel.onBatchAddedHandled()
         }
     }
 
     Scaffold(
-        topBar = { AddNewBatchTopBar(onNavigateBack) }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            VesselSelection(
-                vessels = vessels,
-                selectedVessel = selectedVessel,
-                onVesselSelected = { selectedVessel = it },
-                onAddNewVessel = { showAddVesselDialog = true }
-            )
-            BatchName(batchName) { batchName = it }
-            AddBatchButton(selectedVessel, batchName, onBatchAdded, onNavigateBack)
+        topBar = { AddNewBatchTopBar(onNavigateBack = { navController.popBackStack() }) },
+        content = {
+            Column(
+                modifier = Modifier
+                    .padding(it)
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                BatchName(batchName = batchName, onBatchNameChanged = { viewModel.batchName.value = it })
+                Spacer(modifier = Modifier.height(16.dp))
+                VesselSelection(vessels, selectedVessel, { viewModel.onVesselSelected(it) }, { showAddVesselDialog = true })
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        },
+        bottomBar = {
+            AddBatchButton(selectedVessel) { viewModel.addBatch() }
         }
-    }
+    )
 }
 
 @Composable
 private fun AddBatchButton(
     selectedVessel: Vessel?,
-    batchName: String,
-    onBatchAdded: (Batch) -> Unit,
-    onNavigateBack: () -> Unit
+    onBatchAdded: () -> Unit
 ) {
     Button(
         onClick = {
-            selectedVessel?.let { vessel ->
-                val newBatch = Batch(
-                    name = batchName,
-                    startDate = Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-                    vessel = vessel,
-                )
-                onBatchAdded(newBatch)
-                onNavigateBack()
-            }
+            onBatchAdded()
         },
         enabled = selectedVessel != null,
         modifier = Modifier
@@ -222,7 +188,7 @@ private fun VesselDropdown(
                     )
                 }
                 if (vessels.isNotEmpty()) {
-                    Divider()
+                    HorizontalDivider()
                 }
                 DropdownMenuItem(
                     text = { Text("Add new vessel...") },
@@ -247,12 +213,4 @@ private fun BatchName(batchName: String, onBatchNameChanged: (String) -> Unit) {
     )
 }
 
-@Preview(showBackground = true)
-@Composable
-fun AddBatchScreenPreview() {
-    // This is just a preview, in the real app data will be fetched from Firebase
-    AddBatchScreen(
-        onNavigateBack = {},
-        onBatchAdded = {}
-    )
-}
+

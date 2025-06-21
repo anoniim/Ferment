@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package net.solvetheriddle.fermentlog.ui.screens
+package net.solvetheriddle.fermentlog.ui.screens.settings.vessels
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,53 +13,45 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import net.solvetheriddle.fermentlog.data.Db
+import androidx.navigation.NavController
 import net.solvetheriddle.fermentlog.domain.model.Vessel
 import net.solvetheriddle.fermentlog.ui.screens.common.AddEditVesselDialog
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun VesselsScreen(
-    onNavigateBack: () -> Unit
+    navController: NavController,
+    viewModel: VesselsViewModel = koinViewModel()
 ) {
-    val vessels = remember { mutableStateListOf<Vessel>() }
+    val vessels by viewModel.vessels.collectAsState()
     val showAddVesselDialog = remember { mutableStateOf(false) }
     val vesselToEdit = remember { mutableStateOf<Vessel?>(null) }
     val vesselToDelete = remember { mutableStateOf<Vessel?>(null) }
-
-    // Collect vessels from Firebase
-    LaunchedEffect(Unit) {
-        Db.getVesselsFlow().collect { fetchedVessels ->
-            vessels.clear()
-            vessels.addAll(fetchedVessels)
-        }
-    }
 
     if (showAddVesselDialog.value || vesselToEdit.value != null) {
         AddEditVesselDialog(
@@ -70,9 +62,9 @@ fun VesselsScreen(
             },
             onSave = { vessel ->
                 if (vesselToEdit.value != null) {
-                    Db.updateVessel(vessel)
+                    viewModel.updateVessel(vessel)
                 } else {
-                    Db.addVessel(vessel)
+                    viewModel.addVessel(vessel)
                 }
                 showAddVesselDialog.value = false
                 vesselToEdit.value = null
@@ -85,7 +77,7 @@ fun VesselsScreen(
             vessel = vesselToDelete.value!!,
             onDismiss = { vesselToDelete.value = null },
             onConfirm = {
-                Db.deleteVessel(vesselToDelete.value!!.id)
+                viewModel.deleteVessel(vesselToDelete.value!!.id)
                 vesselToDelete.value = null
             }
         )
@@ -96,8 +88,8 @@ fun VesselsScreen(
             TopAppBar(
                 title = { Text("Vessels") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -130,7 +122,7 @@ private fun VesselsList(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(vessels) { vessel ->
+        items(vessels, key = { it.id }) { vessel ->
             VesselCard(
                 vessel = vessel,
                 onEditVessel = { onEditVessel(vessel) },
@@ -187,22 +179,14 @@ fun DeleteVesselDialog(
         title = { Text("Delete Vessel") },
         text = { Text("Are you sure you want to delete ${vessel.name}?") },
         confirmButton = {
-            androidx.compose.material3.TextButton(onClick = onConfirm) {
+            TextButton(onClick = onConfirm) {
                 Text("Delete")
             }
         },
         dismissButton = {
-            androidx.compose.material3.TextButton(onClick = onDismiss) {
+            TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
         }
     )
-}
-
-
-
-@Preview(showBackground = true)
-@Composable
-private fun VesselsScreenPreview() {
-    VesselsScreen(onNavigateBack = {})
 }

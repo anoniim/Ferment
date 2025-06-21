@@ -1,4 +1,4 @@
-package net.solvetheriddle.fermentlog.ui.screens
+package net.solvetheriddle.fermentlog.ui.screens.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
